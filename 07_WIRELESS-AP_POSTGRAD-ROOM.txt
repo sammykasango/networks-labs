@@ -1,0 +1,106 @@
+! ============================================================
+!  ASKAY UNIVERSITY OF TECHNOLOGY
+!  School of Computing and Information Technology
+!  Network Design & VLAN Configuration Project
+! ============================================================
+!  FILE       : 07_WIRELESS-AP_POSTGRAD-ROOM.txt
+!  DEVICE     : Wireless Access Point (Cisco AP or WRT300N in PT)
+!  LOCATION   : Postgraduate Research Room
+!  LAYER      : Access Layer
+!  VLAN       : VLAN 30 (POSTGRAD)
+!  SUBNET     : 192.168.50.96/28
+!  GATEWAY    : 192.168.50.97
+! ============================================================
+!
+!  NOTE: In Cisco Packet Tracer, use the GUI (Config tab) on the
+!  WRT300N or generic AP to apply these settings.
+!  The CLI commands below apply to Cisco IOS-based APs.
+! ============================================================
+
+! ------------------------------------------------------------
+! STEP 1: Enter Privileged EXEC Mode
+! ------------------------------------------------------------
+enable
+
+! ------------------------------------------------------------
+! STEP 2: Enter Global Configuration Mode
+! ------------------------------------------------------------
+configure terminal
+
+! ------------------------------------------------------------
+! STEP 3: Set Hostname
+! ------------------------------------------------------------
+hostname AP-POSTGRAD-ROOM
+
+! ------------------------------------------------------------
+! STEP 4: Configure BVI (Bridge Virtual Interface)
+!         The BVI acts as the management interface for the AP
+!         DHCP will assign it an IP from the VLAN 30 pool
+! ------------------------------------------------------------
+interface BVI 1
+ description AP-MANAGEMENT-VLAN30
+ ip address dhcp
+ no shutdown
+exit
+
+! ------------------------------------------------------------
+! STEP 5: Configure the Radio Interface (802.11)
+!         Assigns the SSID and ties it to VLAN 30
+! ------------------------------------------------------------
+interface Dot11Radio 0
+ description POSTGRAD-WIRELESS-RADIO
+ ssid ASKAY-POSTGRAD
+ no shutdown
+exit
+
+! ------------------------------------------------------------
+! STEP 6: Configure SSID Settings
+! ------------------------------------------------------------
+dot11 ssid ASKAY-POSTGRAD
+ vlan 30
+ authentication open
+ authentication key-management wpa version 2
+ wpa-psk ascii AskayPostgrad@2025
+ guest-mode
+exit
+
+! ------------------------------------------------------------
+! STEP 7: Associate Radio with SSID
+! ------------------------------------------------------------
+interface Dot11Radio 0
+ ssid ASKAY-POSTGRAD
+exit
+
+! ============================================================
+!  PACKET TRACER GUI SETTINGS (if using WRT300N AP)
+! ============================================================
+!
+!  Tab: Config → Wireless
+!  ┌──────────────────────────────────────────┐
+!  │  SSID        : ASKAY-POSTGRAD             │
+!  │  Channel     : 6  (or Auto)              │
+!  │  Security    : WPA2-PSK                  │
+!  │  Pass Phrase : AskayPostgrad@2025         │
+!  └──────────────────────────────────────────┘
+!
+!  Tab: Config → Internet (WAN) — Leave as DHCP
+!  Tab: Config → LAN
+!  ┌──────────────────────────────────────────┐
+!  │  IP Address  : 192.168.50.102            │
+!  │  Subnet Mask : 255.255.255.240           │
+!  └──────────────────────────────────────────┘
+!
+!  NOTE: Wireless clients will receive IP via DHCP from the
+!  CORE-ROUTER VLAN30-POSTGRAD-ROOM pool (192.168.50.102+)
+!
+! ============================================================
+
+! ------------------------------------------------------------
+! STEP 8: Save Configuration
+! ------------------------------------------------------------
+end
+write memory
+
+! ============================================================
+!  END OF CONFIGURATION — AP-POSTGRAD-ROOM
+! ============================================================

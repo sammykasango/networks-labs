@@ -1,0 +1,87 @@
+! ============================================================
+!  EMBU UNIVERSITY OF TECHNOLOGY
+!  School of Computing and Information Technology
+!  Network Design & VLAN Configuration Project
+! ============================================================
+!  FILE       : 01_ACCESS-SW-COMPUTER-LAB_VLAN10.txt
+!  DEVICE     : Access Switch — Computer Lab
+!  LAYER      : Access Layer
+!  VLAN       : VLAN 10 (COMPUTER_LAB)
+!  SUBNET     : 192.168.50.0/26
+!  HOSTS      : Up to 62 end devices
+!  GATEWAY    : 192.168.50.1  (Router subinterface G0/0.10)
+! ============================================================
+
+! ------------------------------------------------------------
+! STEP 1: Enter Privileged EXEC Mode
+! ------------------------------------------------------------
+enable
+
+! ------------------------------------------------------------
+! STEP 2: Enter Global Configuration Mode
+! ------------------------------------------------------------
+configure terminal
+
+! ------------------------------------------------------------
+! STEP 3: Set Device Hostname
+! ------------------------------------------------------------
+hostname SW-COMPUTER-LAB
+
+! ------------------------------------------------------------
+! STEP 4: Disable IP Domain Lookup (prevents unwanted DNS queries)
+! ------------------------------------------------------------
+no ip domain-lookup
+
+! ------------------------------------------------------------
+! STEP 5: Create VLAN 10 and Name It
+! ------------------------------------------------------------
+vlan 10
+ name COMPUTER_LAB
+exit
+
+! ------------------------------------------------------------
+! STEP 6: Configure Access Ports for Lab PCs
+!         (Assign all PC-facing ports to VLAN 10)
+!         Adjust interface range to match actual port count
+! ------------------------------------------------------------
+interface range FastEthernet 0/1 - 24
+ description PC-COMPUTER-LAB
+ switchport mode access
+ switchport access vlan 10
+ spanning-tree portfast
+ no shutdown
+exit
+
+! ------------------------------------------------------------
+! STEP 7: Configure Uplink Trunk Port to Core Switch
+!         (Use GigabitEthernet uplink if available, else Fa)
+! ------------------------------------------------------------
+interface GigabitEthernet 0/1
+ description UPLINK-TO-CORE-SWITCH
+ switchport mode trunk
+ switchport trunk allowed vlan 10
+ no shutdown
+exit
+
+! ------------------------------------------------------------
+! STEP 8: Configure Management VLAN Interface (optional)
+!         Assign a management IP for remote access
+! ------------------------------------------------------------
+interface vlan 10
+ description MANAGEMENT-COMPUTER-LAB
+ ip address 192.168.50.10 255.255.255.192
+ no shutdown
+exit
+
+! Set default gateway for management traffic
+ip default-gateway 192.168.50.1
+
+! ------------------------------------------------------------
+! STEP 9: Save Configuration
+! ------------------------------------------------------------
+end
+write memory
+
+! ============================================================
+!  END OF CONFIGURATION — SW-COMPUTER-LAB
+! ============================================================

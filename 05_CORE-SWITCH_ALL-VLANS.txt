@@ -1,0 +1,161 @@
+! ============================================================
+!  ASKAY UNIVERSITY OF TECHNOLOGY
+!  School of Computing and Information Technology
+!  Network Design & VLAN Configuration Project
+! ============================================================
+!  FILE       : 05_CORE-SWITCH_ALL-VLANS.txt
+!  DEVICE     : Core Switch (Cisco 3560 or equivalent)
+!  LAYER      : Core / Distribution Layer
+!  ROLE       : VLAN Aggregation + Trunk Hub
+!  VLANS      : 10 (COMPUTER_LAB), 20 (STAFF),
+!               30 (POSTGRAD), 40 (SERVER_ROOM)
+! ============================================================
+!
+!  UPLINK PORT MAP:
+!  ┌────────────────────────────────────────────────────────┐
+!  │  G0/1  → Router (upstream — carries all VLANs)        │
+!  │  G0/2  → SW-COMPUTER-LAB  (VLAN 10)                   │
+!  │  G0/3  → SW-STAFF-OFFICES (VLAN 20)                   │
+!  │  G0/4  → SW-POSTGRAD-ROOM (VLAN 30)                   │
+!  │  G0/5  → SW-SERVER-ROOM   (VLAN 40)                   │
+!  └────────────────────────────────────────────────────────┘
+! ============================================================
+
+! ------------------------------------------------------------
+! STEP 1: Enter Privileged EXEC Mode
+! ------------------------------------------------------------
+enable
+
+! ------------------------------------------------------------
+! STEP 2: Enter Global Configuration Mode
+! ------------------------------------------------------------
+configure terminal
+
+! ------------------------------------------------------------
+! STEP 3: Set Device Hostname
+! ------------------------------------------------------------
+hostname CORE-SWITCH
+
+! ------------------------------------------------------------
+! STEP 4: Disable IP Domain Lookup
+! ------------------------------------------------------------
+no ip domain-lookup
+
+! ------------------------------------------------------------
+! STEP 5: Create All VLANs on Core Switch
+!         All departmental VLANs must exist on the core switch
+! ------------------------------------------------------------
+vlan 10
+ name COMPUTER_LAB
+exit
+
+vlan 20
+ name STAFF
+exit
+
+vlan 30
+ name POSTGRAD
+exit
+
+vlan 40
+ name SERVER_ROOM
+exit
+
+vlan 99
+ name NATIVE-VLAN
+exit
+
+! ------------------------------------------------------------
+! STEP 6: Configure Trunk Uplink to Router
+!         Carries all four VLANs to the router subinterfaces
+! ------------------------------------------------------------
+interface GigabitEthernet 0/1
+ description TRUNK-TO-ROUTER-G0/0
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 99
+ switchport trunk allowed vlan 10,20,30,40
+ no shutdown
+exit
+
+! ------------------------------------------------------------
+! STEP 7: Configure Trunk Downlink to SW-COMPUTER-LAB
+! ------------------------------------------------------------
+interface GigabitEthernet 0/2
+ description TRUNK-TO-SW-COMPUTER-LAB
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 99
+ switchport trunk allowed vlan 10
+ no shutdown
+exit
+
+! ------------------------------------------------------------
+! STEP 8: Configure Trunk Downlink to SW-STAFF-OFFICES
+! ------------------------------------------------------------
+interface GigabitEthernet 0/3
+ description TRUNK-TO-SW-STAFF-OFFICES
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 99
+ switchport trunk allowed vlan 20
+ no shutdown
+exit
+
+! ------------------------------------------------------------
+! STEP 9: Configure Trunk Downlink to SW-POSTGRAD-ROOM
+! ------------------------------------------------------------
+interface GigabitEthernet 0/4
+ description TRUNK-TO-SW-POSTGRAD-ROOM
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 99
+ switchport trunk allowed vlan 30
+ no shutdown
+exit
+
+! ------------------------------------------------------------
+! STEP 10: Configure Trunk Downlink to SW-SERVER-ROOM
+! ------------------------------------------------------------
+interface GigabitEthernet 0/5
+ description TRUNK-TO-SW-SERVER-ROOM
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 99
+ switchport trunk allowed vlan 40
+ no shutdown
+exit
+
+! ------------------------------------------------------------
+! STEP 11: Configure Management SVI (Switch Virtual Interface)
+!          Use VLAN 10 subnet for management access
+! ------------------------------------------------------------
+ip routing
+
+interface vlan 10
+ description MANAGEMENT-SVI
+ ip address 192.168.50.11 255.255.255.192
+ no shutdown
+exit
+
+ip default-gateway 192.168.50.1
+
+! ------------------------------------------------------------
+! STEP 12: Spanning Tree — Set Core as Root Bridge
+!          Ensures Core Switch is the STP root for all VLANs
+! ------------------------------------------------------------
+spanning-tree mode rapid-pvst
+spanning-tree vlan 10 root primary
+spanning-tree vlan 20 root primary
+spanning-tree vlan 30 root primary
+spanning-tree vlan 40 root primary
+
+! ------------------------------------------------------------
+! STEP 13: Save Configuration
+! ------------------------------------------------------------
+end
+write memory
+
+! ============================================================
+!  END OF CONFIGURATION — CORE-SWITCH
+! ============================================================

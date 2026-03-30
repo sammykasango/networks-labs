@@ -1,0 +1,168 @@
+! ============================================================
+!  ASKAY UNIVERSITY OF TECHNOLOGY
+!  School of Computing and Information Technology
+!  Network Design & VLAN Configuration Project
+! ============================================================
+!  FILE       : 08_VERIFICATION-AND-TROUBLESHOOTING.txt
+!  PURPOSE    : Master Reference — Verification & Testing Commands
+!  APPLY ON   : All devices as indicated per section
+! ============================================================
+!
+!  NETWORK SUMMARY:
+!  ┌────────────────────────────────────────────────────────────┐
+!  │ VLAN 10 │ COMPUTER_LAB   │ 192.168.50.0/26   │ GW .50.1  │
+!  │ VLAN 20 │ STAFF          │ 192.168.50.64/27  │ GW .50.65 │
+!  │ VLAN 30 │ POSTGRAD       │ 192.168.50.96/28  │ GW .50.97 │
+!  │ VLAN 40 │ SERVER_ROOM    │ 192.168.50.112/29 │ GW .50.113│
+!  └────────────────────────────────────────────────────────────┘
+!
+! ============================================================
+
+! ============================================================
+!  SECTION 1 — ACCESS SWITCH VERIFICATION
+!  (Run on SW-COMPUTER-LAB, SW-STAFF-OFFICES,
+!   SW-POSTGRAD-ROOM, SW-SERVER-ROOM)
+! ============================================================
+
+! -- Confirm VLANs exist and ports are assigned correctly
+show vlan brief
+
+! -- Confirm specific VLAN details
+show vlan id 10
+show vlan id 20
+show vlan id 30
+show vlan id 40
+
+! -- Confirm trunk links are active and carrying correct VLANs
+show interfaces trunk
+
+! -- Check a specific interface status and config
+show interfaces FastEthernet 0/1 switchport
+show interfaces GigabitEthernet 0/1 switchport
+
+! -- Confirm spanning tree state per VLAN
+show spanning-tree vlan 10
+show spanning-tree vlan 20
+show spanning-tree vlan 30
+show spanning-tree vlan 40
+
+! -- View switch MAC address table (confirm devices are seen)
+show mac address-table
+
+! -- Confirm management IP on VLAN SVI
+show interfaces vlan 10
+show ip interface brief
+
+! ============================================================
+!  SECTION 2 — CORE SWITCH VERIFICATION
+!  (Run on CORE-SWITCH)
+! ============================================================
+
+! -- Confirm all four VLANs are created
+show vlan brief
+
+! -- Confirm all trunk interfaces are active
+show interfaces trunk
+
+! -- Verify trunk details for router uplink
+show interfaces GigabitEthernet 0/1 trunk
+
+! -- Verify trunk details for each access switch
+show interfaces GigabitEthernet 0/2 trunk
+show interfaces GigabitEthernet 0/3 trunk
+show interfaces GigabitEthernet 0/4 trunk
+show interfaces GigabitEthernet 0/5 trunk
+
+! -- Confirm spanning tree root bridge status
+show spanning-tree
+
+! -- Review interface summary
+show ip interface brief
+
+! ============================================================
+!  SECTION 3 — ROUTER VERIFICATION
+!  (Run on CORE-ROUTER)
+! ============================================================
+
+! -- Confirm all subinterfaces are up/up
+show ip interface brief
+
+! -- Confirm IP addresses on subinterfaces
+show interfaces GigabitEthernet 0/0.10
+show interfaces GigabitEthernet 0/0.20
+show interfaces GigabitEthernet 0/0.30
+show interfaces GigabitEthernet 0/0.40
+
+! -- Confirm routing table has connected routes for all subnets
+show ip route
+
+! -- Confirm DHCP pool configurations
+show ip dhcp pool
+
+! -- Confirm DHCP bindings (shows which IPs have been assigned)
+show ip dhcp binding
+
+! -- Check for DHCP conflicts (duplicate IPs)
+show ip dhcp conflict
+
+! -- Check DHCP statistics (discover/offer/request/ack counts)
+show ip dhcp server statistics
+
+! ============================================================
+!  SECTION 4 — END-TO-END CONNECTIVITY TESTS
+!  (Run ping tests from PCs or from Router CLI)
+! ============================================================
+
+! -- FROM ROUTER: Ping each VLAN gateway (self-test)
+ping 192.168.50.1
+ping 192.168.50.65
+ping 192.168.50.97
+ping 192.168.50.113
+
+! -- FROM PC IN VLAN 10: Ping gateway
+!    PC> ping 192.168.50.1
+
+! -- FROM PC IN VLAN 10: Ping PC in VLAN 20 (inter-VLAN routing test)
+!    PC> ping 192.168.50.71
+
+! -- FROM PC IN VLAN 20: Ping PC in VLAN 30
+!    PC> ping 192.168.50.102
+
+! -- FROM PC IN VLAN 30: Ping Server in VLAN 40
+!    PC> ping 192.168.50.114
+
+! -- FROM PC: Test DNS resolution (if DNS server configured)
+!    PC> ping askay.ac.ke
+
+! ============================================================
+!  SECTION 5 — COMMON ISSUES AND FIXES
+! ============================================================
+!
+!  ISSUE: "show vlan brief" shows port in VLAN 1 (default)
+!  FIX  : Re-enter switchport access vlan <id> on that port
+!
+!  ISSUE: Trunk shows no VLANs allowed / pruned
+!  FIX  : switchport trunk allowed vlan add <vlan-id>
+!
+!  ISSUE: DHCP devices show 169.254.x.x (APIPA address)
+!  FIX  : Check trunk from access switch reaches router
+!         Verify DHCP pool network matches VLAN subnet
+!         Verify excluded-address range is not consuming all IPs
+!
+!  ISSUE: Spanning Tree PVID mismatch error
+!  FIX  : Ensure both ends of a trunk have the same native VLAN
+!         switchport trunk native vlan 99 (on both ends)
+!
+!  ISSUE: Inter-VLAN ping fails
+!  FIX  : Verify ip routing is enabled on router
+!         Verify subinterface encapsulation dot1Q <vlan-id> matches
+!         Verify trunk from core switch to router carries that VLAN
+!         Verify PC default gateway matches subinterface IP
+!
+!  ISSUE: Router subinterface shows "down/down"
+!  FIX  : Ensure parent interface G0/0 has "no shutdown"
+!         Ensure core switch trunk carries that VLAN
+!
+! ============================================================
+!  END OF VERIFICATION REFERENCE
+! ============================================================

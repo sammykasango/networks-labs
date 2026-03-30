@@ -1,0 +1,84 @@
+! ============================================================
+!  ASKAY UNIVERSITY OF TECHNOLOGY
+!  School of Computing and Information Technology
+!  Network Design & VLAN Configuration Project
+! ============================================================
+!  FILE       : 02_ACCESS-SW-STAFF-OFFICES_VLAN20.txt
+!  DEVICE     : Access Switch — Staff Offices
+!  LAYER      : Access Layer
+!  VLAN       : VLAN 20 (STAFF)
+!  SUBNET     : 192.168.50.64/27
+!  HOSTS      : Up to 30 end devices
+!  GATEWAY    : 192.168.50.65  (Router subinterface G0/0.20)
+! ============================================================
+
+! ------------------------------------------------------------
+! STEP 1: Enter Privileged EXEC Mode
+! ------------------------------------------------------------
+enable
+
+! ------------------------------------------------------------
+! STEP 2: Enter Global Configuration Mode
+! ------------------------------------------------------------
+configure terminal
+
+! ------------------------------------------------------------
+! STEP 3: Set Device Hostname
+! ------------------------------------------------------------
+hostname SW-STAFF-OFFICES
+
+! ------------------------------------------------------------
+! STEP 4: Disable IP Domain Lookup
+! ------------------------------------------------------------
+no ip domain-lookup
+
+! ------------------------------------------------------------
+! STEP 5: Create VLAN 20 and Name It
+! ------------------------------------------------------------
+vlan 20
+ name STAFF
+exit
+
+! ------------------------------------------------------------
+! STEP 6: Configure Access Ports for Staff PCs/Laptops
+!         (Assign all end-device-facing ports to VLAN 20)
+!         Adjust interface range to match actual port count
+! ------------------------------------------------------------
+interface range FastEthernet 0/1 - 24
+ description PC-STAFF-OFFICES
+ switchport mode access
+ switchport access vlan 20
+ spanning-tree portfast
+ no shutdown
+exit
+
+! ------------------------------------------------------------
+! STEP 7: Configure Uplink Trunk Port to Core Switch
+! ------------------------------------------------------------
+interface GigabitEthernet 0/1
+ description UPLINK-TO-CORE-SWITCH
+ switchport mode trunk
+ switchport trunk allowed vlan 20
+ no shutdown
+exit
+
+! ------------------------------------------------------------
+! STEP 8: Configure Management VLAN Interface
+! ------------------------------------------------------------
+interface vlan 20
+ description MANAGEMENT-STAFF-OFFICES
+ ip address 192.168.50.70 255.255.255.224
+ no shutdown
+exit
+
+ip default-gateway 192.168.50.65
+
+! ------------------------------------------------------------
+! STEP 9: Save Configuration
+! ------------------------------------------------------------
+end
+write memory
+
+! ============================================================
+!  END OF CONFIGURATION — SW-STAFF-OFFICES
+! ============================================================

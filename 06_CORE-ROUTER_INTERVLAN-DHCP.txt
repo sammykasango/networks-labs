@@ -1,0 +1,233 @@
+! ============================================================
+!  ASKAY UNIVERSITY OF TECHNOLOGY
+!  School of Computing and Information Technology
+!  Network Design & VLAN Configuration Project
+! ============================================================
+!  FILE       : 06_CORE-ROUTER_INTERVLAN-DHCP.txt
+!  DEVICE     : Core Router (Cisco 1941 or equivalent)
+!  LAYER      : Distribution Layer
+!  ROLE       : Inter-VLAN Routing (Router-on-a-Stick)
+!               + DHCP Server (all four VLANs)
+!
+!  PHYSICAL INTERFACE : GigabitEthernet 0/0  → Core Switch G0/1
+!
+!  SUBINTERFACE MAP:
+!  ┌──────────────────────────────────────────────────────────┐
+!  │  G0/0.10 → VLAN 10  COMPUTER_LAB   192.168.50.1/26     │
+!  │  G0/0.20 → VLAN 20  STAFF          192.168.50.65/27     │
+!  │  G0/0.30 → VLAN 30  POSTGRAD       192.168.50.97/28     │
+!  │  G0/0.40 → VLAN 40  SERVER_ROOM    192.168.50.113/29    │
+!  └──────────────────────────────────────────────────────────┘
+! ============================================================
+
+! ------------------------------------------------------------
+! STEP 1: Enter Privileged EXEC Mode
+! ------------------------------------------------------------
+enable
+
+! ------------------------------------------------------------
+! STEP 2: Enter Global Configuration Mode
+! ------------------------------------------------------------
+configure terminal
+
+! ------------------------------------------------------------
+! STEP 3: Set Device Hostname
+! ------------------------------------------------------------
+hostname CORE-ROUTER
+
+! ------------------------------------------------------------
+! STEP 4: Disable IP Domain Lookup
+! ------------------------------------------------------------
+no ip domain-lookup
+
+! ============================================================
+!  SECTION A: ROUTER-ON-A-STICK — SUBINTERFACE CONFIGURATION
+! ============================================================
+
+! ------------------------------------------------------------
+! STEP 5: Activate Physical Interface (no IP — subinterfaces carry IPs)
+! ------------------------------------------------------------
+interface GigabitEthernet 0/0
+ description TRUNK-TO-CORE-SWITCH
+ no ip address
+ no shutdown
+exit
+
+! ------------------------------------------------------------
+! STEP 6: Subinterface G0/0.10 — VLAN 10 (Computer Lab)
+!         Gateway: 192.168.50.1
+!         Subnet : 192.168.50.0/26  (62 usable hosts)
+! ------------------------------------------------------------
+interface GigabitEthernet 0/0.10
+ description GATEWAY-VLAN10-COMPUTER-LAB
+ encapsulation dot1Q 10
+ ip address 192.168.50.1 255.255.255.192
+ no shutdown
+exit
+
+! ------------------------------------------------------------
+! STEP 7: Subinterface G0/0.20 — VLAN 20 (Staff Offices)
+!         Gateway: 192.168.50.65
+!         Subnet : 192.168.50.64/27  (30 usable hosts)
+! ------------------------------------------------------------
+interface GigabitEthernet 0/0.20
+ description GATEWAY-VLAN20-STAFF-OFFICES
+ encapsulation dot1Q 20
+ ip address 192.168.50.65 255.255.255.224
+ no shutdown
+exit
+
+! ------------------------------------------------------------
+! STEP 8: Subinterface G0/0.30 — VLAN 30 (Postgraduate Room)
+!         Gateway: 192.168.50.97
+!         Subnet : 192.168.50.96/28  (14 usable hosts)
+! ------------------------------------------------------------
+interface GigabitEthernet 0/0.30
+ description GATEWAY-VLAN30-POSTGRAD-ROOM
+ encapsulation dot1Q 30
+ ip address 192.168.50.97 255.255.255.240
+ no shutdown
+exit
+
+! ------------------------------------------------------------
+! STEP 9: Subinterface G0/0.40 — VLAN 40 (Server Room)
+!         Gateway: 192.168.50.113
+!         Subnet : 192.168.50.112/29  (6 usable hosts)
+!         NOTE: Servers should use static IPs — DHCP pool
+!               provided here for Packet Tracer simulation only
+! ------------------------------------------------------------
+interface GigabitEthernet 0/0.40
+ description GATEWAY-VLAN40-SERVER-ROOM
+ encapsulation dot1Q 40
+ ip address 192.168.50.113 255.255.255.248
+ no shutdown
+exit
+
+! ============================================================
+!  SECTION B: DHCP SERVER CONFIGURATION
+! ============================================================
+
+! ------------------------------------------------------------
+! STEP 10: Exclude Static/Reserved IP Addresses from DHCP Pools
+!          Always exclude the gateway and management addresses first
+! ------------------------------------------------------------
+
+! VLAN 10 exclusions — gateway + management IPs
+ip dhcp excluded-address 192.168.50.1 192.168.50.15
+
+! VLAN 20 exclusions — gateway + management IPs
+ip dhcp excluded-address 192.168.50.65 192.168.50.70
+
+! VLAN 30 exclusions — gateway + management IPs
+ip dhcp excluded-address 192.168.50.97 192.168.50.101
+
+! VLAN 40 exclusions — all server IPs are static (exclude entire range)
+ip dhcp excluded-address 192.168.50.113 192.168.50.118
+
+! ------------------------------------------------------------
+! STEP 11: DHCP Pool — VLAN 10 (Computer Lab)
+!          Assigns: 192.168.50.16 – 192.168.50.62
+! ------------------------------------------------------------
+ip dhcp pool VLAN10-COMPUTER-LAB
+ network 192.168.50.0 255.255.255.192
+ default-router 192.168.50.1
+ dns-server 8.8.8.8 8.8.4.4
+ domain-name lab.askay.ac.ke
+ lease 1
+exit
+
+! ------------------------------------------------------------
+! STEP 12: DHCP Pool — VLAN 20 (Staff Offices)
+!          Assigns: 192.168.50.71 – 192.168.50.94
+! ------------------------------------------------------------
+ip dhcp pool VLAN20-STAFF-OFFICES
+ network 192.168.50.64 255.255.255.224
+ default-router 192.168.50.65
+ dns-server 8.8.8.8 8.8.4.4
+ domain-name staff.askay.ac.ke
+ lease 7
+exit
+
+! ------------------------------------------------------------
+! STEP 13: DHCP Pool — VLAN 30 (Postgraduate Room)
+!          Assigns: 192.168.50.102 – 192.168.50.110
+! ------------------------------------------------------------
+ip dhcp pool VLAN30-POSTGRAD-ROOM
+ network 192.168.50.96 255.255.255.240
+ default-router 192.168.50.97
+ dns-server 8.8.8.8 8.8.4.4
+ domain-name postgrad.askay.ac.ke
+ lease 3
+exit
+
+! ------------------------------------------------------------
+! STEP 14: DHCP Pool — VLAN 40 (Server Room)
+!          All servers use static IPs — pool disabled by exclusion
+!          Pool definition retained for Packet Tracer simulation
+! ------------------------------------------------------------
+ip dhcp pool VLAN40-SERVER-ROOM
+ network 192.168.50.112 255.255.255.248
+ default-router 192.168.50.113
+ dns-server 8.8.8.8
+ domain-name servers.askay.ac.ke
+ lease 0
+exit
+
+! ============================================================
+!  SECTION C: ROUTING AND OPTIONAL UPLINK
+! ============================================================
+
+! ------------------------------------------------------------
+! STEP 15: Enable IP Routing (required for inter-VLAN forwarding)
+! ------------------------------------------------------------
+ip routing
+
+! ------------------------------------------------------------
+! STEP 16: (Optional) WAN / Internet Uplink Interface
+!          Uncomment and assign IP if router has internet access
+! ------------------------------------------------------------
+! interface GigabitEthernet 0/1
+!  description WAN-UPLINK-INTERNET
+!  ip address <WAN-IP> <WAN-MASK>
+!  ip nat outside
+!  no shutdown
+! exit
+!
+! ip route 0.0.0.0 0.0.0.0 <WAN-GATEWAY>
+!
+! ip nat inside source list 1 interface GigabitEthernet 0/1 overload
+! access-list 1 permit 192.168.50.0 0.0.0.255
+
+! ============================================================
+!  SECTION D: VERIFICATION COMMANDS (Run after configuration)
+! ============================================================
+!
+!  -- Confirm DHCP pools and bindings:
+!     show ip dhcp pool
+!     show ip dhcp binding
+!     show ip dhcp conflict
+!
+!  -- Confirm subinterfaces and IP assignments:
+!     show ip interface brief
+!     show interfaces GigabitEthernet 0/0.10
+!
+!  -- Confirm routing table:
+!     show ip route
+!
+!  -- Test inter-VLAN ping from router:
+!     ping 192.168.50.1        (VLAN 10 gateway)
+!     ping 192.168.50.65       (VLAN 20 gateway)
+!     ping 192.168.50.97       (VLAN 30 gateway)
+!     ping 192.168.50.113      (VLAN 40 gateway)
+!
+! ============================================================
+
+! ------------------------------------------------------------
+! STEP 17: Save Configuration
+! ------------------------------------------------------------
+end
+write memory
+
+! ============================================================
+!  END OF CONFIGURATION — CORE-ROUTER
+! ============================================================

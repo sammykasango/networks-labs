@@ -1,0 +1,138 @@
+! ============================================================
+!  ASKAY UNIVERSITY OF TECHNOLOGY
+!  School of Computing and Information Technology
+!  Network Design & VLAN Configuration Project
+! ============================================================
+!  FILE       : 04_ACCESS-SW-SERVER-ROOM_VLAN40.txt
+!  DEVICE     : Access Switch — Server Room
+!  LAYER      : Access Layer
+!  VLAN       : VLAN 40 (SERVER_ROOM)
+!  SUBNET     : 192.168.50.112/29
+!  HOSTS      : Up to 6 servers (static IPs recommended)
+!  GATEWAY    : 192.168.50.113  (Router subinterface G0/0.40)
+! ============================================================
+
+! ------------------------------------------------------------
+! STEP 1: Enter Privileged EXEC Mode
+! ------------------------------------------------------------
+enable
+
+! ------------------------------------------------------------
+! STEP 2: Enter Global Configuration Mode
+! ------------------------------------------------------------
+configure terminal
+
+! ------------------------------------------------------------
+! STEP 3: Set Device Hostname
+! ------------------------------------------------------------
+hostname SW-SERVER-ROOM
+
+! ------------------------------------------------------------
+! STEP 4: Disable IP Domain Lookup
+! ------------------------------------------------------------
+no ip domain-lookup
+
+! ------------------------------------------------------------
+! STEP 5: Create VLAN 40 and Name It
+! ------------------------------------------------------------
+vlan 40
+ name SERVER_ROOM
+exit
+
+! ------------------------------------------------------------
+! STEP 6: Configure Access Ports for Servers
+!         Servers use static IPs; portfast applied for fast link-up
+!         NOTE: Do NOT use DHCP on server interfaces — assign static IPs
+! ------------------------------------------------------------
+interface FastEthernet 0/1
+ description SERVER-DNS
+ switchport mode access
+ switchport access vlan 40
+ spanning-tree portfast
+ no shutdown
+exit
+
+interface FastEthernet 0/2
+ description SERVER-WEB
+ switchport mode access
+ switchport access vlan 40
+ spanning-tree portfast
+ no shutdown
+exit
+
+interface FastEthernet 0/3
+ description SERVER-FILE
+ switchport mode access
+ switchport access vlan 40
+ spanning-tree portfast
+ no shutdown
+exit
+
+interface FastEthernet 0/4
+ description SERVER-04
+ switchport mode access
+ switchport access vlan 40
+ spanning-tree portfast
+ no shutdown
+exit
+
+interface FastEthernet 0/5
+ description SERVER-05
+ switchport mode access
+ switchport access vlan 40
+ spanning-tree portfast
+ no shutdown
+exit
+
+interface FastEthernet 0/6
+ description SERVER-06
+ switchport mode access
+ switchport access vlan 40
+ spanning-tree portfast
+ no shutdown
+exit
+
+! ------------------------------------------------------------
+! STEP 7: Configure Uplink Trunk Port to Core Switch
+! ------------------------------------------------------------
+interface GigabitEthernet 0/1
+ description UPLINK-TO-CORE-SWITCH
+ switchport mode trunk
+ switchport trunk allowed vlan 40
+ no shutdown
+exit
+
+! ------------------------------------------------------------
+! STEP 8: Configure Management VLAN Interface
+! ------------------------------------------------------------
+interface vlan 40
+ description MANAGEMENT-SERVER-ROOM
+ ip address 192.168.50.114 255.255.255.248
+ no shutdown
+exit
+
+ip default-gateway 192.168.50.113
+
+! ------------------------------------------------------------
+! STEP 9: Harden Unused Ports (Security Best Practice)
+! ------------------------------------------------------------
+interface range FastEthernet 0/7 - 24
+ description UNUSED-DISABLED
+ switchport mode access
+ switchport access vlan 999
+ shutdown
+exit
+
+vlan 999
+ name UNUSED-QUARANTINE
+exit
+
+! ------------------------------------------------------------
+! STEP 10: Save Configuration
+! ------------------------------------------------------------
+end
+write memory
+
+! ============================================================
+!  END OF CONFIGURATION — SW-SERVER-ROOM
+! ============================================================
