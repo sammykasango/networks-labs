@@ -1,5 +1,5 @@
 ! ============================================================
-!  EMBU UNIVERSITY OF TECHNOLOGY
+!  ASKAY UNIVERSITY OF TECHNOLOGY
 !  School of Computing and Information Technology
 !  Network Design & VLAN Configuration Project
 ! ============================================================
